@@ -3,6 +3,9 @@
 /**
  * @package siteconfig
  */
+
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\ArrayList;
 class SiteConfigLeftAndMain extends LeftAndMain
 {
 	/**

@@ -16,6 +16,9 @@
  *
  * @package siteconfig
  */
+
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DB;
 class SiteConfig extends DataObject implements PermissionProvider, TemplateGlobalProvider
 {
     private static $db = array(
