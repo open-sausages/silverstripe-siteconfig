@@ -173,7 +173,7 @@ class SiteConfig extends DataObject implements PermissionProvider, TemplateGloba
     {
         if (Permission::check('ADMIN') || Permission::check('EDIT_SITECONFIG')) {
             $actions = new FieldList(
-                FormAction::create('save_siteconfig', _t('CMSMain.SAVE', 'Save'))
+                FormAction::create('save', _t('CMSMain.SAVE', 'Save'))
                     ->addExtraClass('ss-ui-action-constructive')->setAttribute('data-icon', 'accept')
             );
         } else {

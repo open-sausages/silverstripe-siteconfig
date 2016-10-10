@@ -11,6 +11,8 @@ use SilverStripe\Forms\Form;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
+use SilverStripe\View\Requirements;
+use SilverStripe\Control\Controller;
 
 class SiteConfigLeftAndMain extends LeftAndMain
 {
@@ -44,6 +46,25 @@ class SiteConfigLeftAndMain extends LeftAndMain
 	 */
 	private static $required_permission_codes = array('EDIT_SITECONFIG');
 
+    public function init()
+    {
+        parent::init();
+
+        Requirements::add_i18n_javascript('siteconfig/client/lang', false, true);
+        Requirements::javascript("siteconfig/client/dist/js/bundle.js");
+    }
+
+    public function getClientConfig()
+    {
+        return array_merge( parent::getClientConfig(), [
+            'reactRouter' => true,
+            'form' => [
+                'EditForm' => [
+                    'schemaUrl' => $this->Link('schema/EditForm')
+                ],
+            ],
+        ]);
+    }
 
 	/**
 	 * @param null $id Not used.
@@ -61,9 +82,10 @@ class SiteConfigLeftAndMain extends LeftAndMain
 		$fields->push(new HiddenField('PreviewURL', 'Preview URL', $home));
 
 		// Added in-line to the form, but plucked into different view by LeftAndMain.Preview.js upon load
+        // TODO Fix navigator template
         /** @skipUpgrade */
-		$fields->push($navField = new LiteralField('SilverStripeNavigator', $this->getSilverStripeNavigator()));
-		$navField->setAllowHTML(true);
+//		$fields->push($navField = new LiteralField('SilverStripeNavigator', $this->getSilverStripeNavigator()));
+//		$navField->setAllowHTML(true);
 
 		// Retrieve validator, if one has been setup (e.g. via data extensions).
 		if ($siteConfig->hasMethod("getCMSValidator")) {
@@ -73,70 +95,22 @@ class SiteConfigLeftAndMain extends LeftAndMain
 		}
 
 		$actions = $siteConfig->getCMSActions();
-		$negotiator = $this->getResponseNegotiator();
+
 		/** @var Form $form */
-		$form = Form::create(
-			$this, 'EditForm', $fields, $actions, $validator
-		)->setHTMLID('Form_EditForm');
-		$form->setValidationResponseCallback(function() use ($negotiator, $form) {
-			$request = $this->getRequest();
-			if($request->isAjax() && $negotiator) {
-				$form->setupFormErrors();
-				$result = $form->forTemplate();
-
-				return $negotiator->respond($request, array(
-					'CurrentForm' => function() use($result) {
-						return $result;
-					}
-				));
-			}
-		});
-		$form->addExtraClass('cms-content center cms-edit-form');
-		$form->setAttribute('data-pjax-fragment', 'CurrentForm');
-
-        if ($form->Fields()->hasTabSet()) {
-            $form->Fields()->findOrMakeTab('Root')->setTemplate('SilverStripe\\Forms\\CMSTabSet');
-        }
-		$form->setHTMLID('Form_EditForm');
+		$form = Form::create($this, 'EditForm', $fields, $actions, $validator);
 		$form->loadDataFrom($siteConfig);
-		$form->setTemplate($this->getTemplatesWithSuffix('_EditForm'));
 
-		// Use <button> to allow full jQuery UI styling
-		$actions = $actions->dataFields();
-        if ($actions) {
-            /** @var FormAction $action */
-            foreach ($actions as $action) {
-                $action->setUseButtonTag(true);
-            }
-        }
+
+        // Configure form to respond to validation errors with form schema
+        // if requested via react.
+        $form->setValidationResponseCallback(function() use ($form, $siteConfig) {
+            $schemaId = Controller::join_links($this->Link('schema/EditForm'), $siteConfig->exists() ? $siteConfig->ID : '');
+            return $this->getSchemaResponse($form, $schemaId);
+        });
 
 		$this->extend('updateEditForm', $form);
 
 		return $form;
-	}
-
-	/**
-	 * Save the current sites {@link SiteConfig} into the database.
-	 *
-	 * @param array $data
-	 * @param Form $form
-	 * @return String
-	 */
-    public function save_siteconfig($data, $form)
-    {
-		$siteConfig = SiteConfig::current_site_config();
-		$form->saveInto($siteConfig);
-
-		try {
-			$siteConfig->write();
-		} catch(ValidationException $ex) {
-			$form->sessionMessage($ex->getResult()->message(), 'bad');
-			return $this->getResponseNegotiator()->respond($this->request);
-		}
-
-		$this->response->addHeader('X-Status', rawurlencode(_t('LeftAndMain.SAVEDUP', 'Saved.')));
-
-		return $form->forTemplate();
 	}
 
 
