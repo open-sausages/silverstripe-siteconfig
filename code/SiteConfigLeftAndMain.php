@@ -9,7 +9,7 @@ use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\ORM\ArrayListInterface;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\View\ArrayData;
@@ -155,7 +155,7 @@ class SiteConfigLeftAndMain extends LeftAndMain
 
     public function Breadcrumbs($unlinked = false)
     {
-        return new ArrayListInterface(array(
+        return new ArrayList(array(
             new ArrayData(array(
                 'Title' => static::menu_title(),
                 'Link' => $this->Link()
