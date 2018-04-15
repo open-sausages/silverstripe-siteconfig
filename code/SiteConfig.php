@@ -20,7 +20,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
-use SilverStripe\View\TemplateGlobalProvider;
+use SilverStripe\View\Templates\TemplateGlobalProvider;
 use SilverStripe\CMS\Controllers\CMSMain;
 
 /**
